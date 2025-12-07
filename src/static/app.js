@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   const activitiesList = document.getElementById("activities-list");
   const activitySelect = document.getElementById("activity");
   const signupForm = document.getElementById("signup-form");
@@ -74,12 +74,12 @@ document.addEventListener("DOMContentLoaded", () => {
       const result = await resp.json();
       if (resp.ok) {
         messageDiv.textContent = result.message;
-        messageDiv.className = "success";
+        messageDiv.className = "message success";
         // Refresh activities to reflect removal
-        fetchActivities();
+        await fetchActivities();
       } else {
         messageDiv.textContent = result.detail || "Failed to remove participant";
-        messageDiv.className = "error";
+        messageDiv.className = "message error";
       }
       messageDiv.classList.remove("hidden");
       setTimeout(() => messageDiv.classList.add("hidden"), 4000);
@@ -110,14 +110,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (response.ok) {
         messageDiv.textContent = result.message;
-        messageDiv.className = "success";
+        messageDiv.className = "message success";
         signupForm.reset();
 
         // Refresh activities to show updated participants / availability
-        fetchActivities();
+        await fetchActivities();
       } else {
         messageDiv.textContent = result.detail || "An error occurred";
-        messageDiv.className = "error";
+        messageDiv.className = "message error";
       }
 
       messageDiv.classList.remove("hidden");
@@ -135,5 +135,5 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Initialize app
-  fetchActivities();
+  await fetchActivities();
 });
