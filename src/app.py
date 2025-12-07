@@ -27,6 +27,12 @@ activities = {
         "max_participants": 12,
         "participants": ["michael@mergington.edu", "daniel@mergington.edu"]
     },
+    "Tennis Team": {
+        "description": "Tennis training and competitive matches",
+        "schedule": "Mondays and Wednesdays, 3:30 PM - 5:00 PM",
+        "max_participants": 16,
+        "participants": ["jordan@mergington.edu", "morgan@mergington.edu"]
+    },
     "Programming Class": {
         "description": "Learn programming fundamentals and build software projects",
         "schedule": "Tuesdays and Thursdays, 3:30 PM - 4:30 PM",
@@ -38,6 +44,78 @@ activities = {
         "schedule": "Mondays, Wednesdays, Fridays, 2:00 PM - 3:00 PM",
         "max_participants": 30,
         "participants": ["john@mergington.edu", "olivia@mergington.edu"]
+    },
+    "Soccer Team": {
+        "description": "Outdoor soccer practice and inter-school matches",
+        "schedule": "Mondays, Wednesdays, Fridays, 4:00 PM - 6:00 PM",
+        "max_participants": 22,
+        "participants": ["alex@mergington.edu", "riley@mergington.edu"]
+    },
+    "Basketball Club": {
+        "description": "Skill development and friendly competitions in basketball",
+        "schedule": "Tuesdays and Thursdays, 4:00 PM - 5:30 PM",
+        "max_participants": 15,
+        "participants": ["tyler@mergington.edu", "samantha@mergington.edu"]
+    },
+    "Drama Club": {
+        "description": "Acting, stagecraft, and seasonal performances",
+        "schedule": "Wednesdays and Fridays, 3:30 PM - 5:00 PM",
+        "max_participants": 25,
+        "participants": ["isabella@mergington.edu", "liam@mergington.edu"]
+    },
+    "Art Studio": {
+        "description": "Drawing, painting, and mixed media workshops",
+        "schedule": "Tuesdays, 3:30 PM - 5:00 PM",
+        "max_participants": 20,
+        "participants": ["chloe@mergington.edu", "noah@mergington.edu"]
+    },
+    "Debate Team": {
+        "description": "Competitive debate practice and public speaking skills",
+        "schedule": "Mondays and Thursdays, 5:00 PM - 6:30 PM",
+        "max_participants": 18,
+        "participants": ["grace@mergington.edu", "ben@mergington.edu"]
+    },
+    "Science Club": {
+        "description": "Experiments, science fairs, and STEM projects",
+        "schedule": "Tuesdays, 4:00 PM - 5:30 PM",
+        "max_participants": 20,
+        "participants": ["lucas@mergington.edu", "arianna@mergington.edu"]
+    },
+    "Volleyball Team": {
+        "description": "Volleyball training and competitive matches",
+        "schedule": "Tuesdays and Thursdays, 3:30 PM - 5:00 PM",
+        "max_participants": 14,
+        "participants": ["hannah@mergington.edu", "jacob@mergington.edu"]
+    },
+    "Swimming Team": {
+        "description": "Swimming practice and competitive swimming events",
+        "schedule": "Mondays, Wednesdays, Fridays, 4:30 PM - 5:30 PM",
+        "max_participants": 20,
+        "participants": ["megan@mergington.edu", "ethan@mergington.edu"]
+    },
+    "Music Band": {
+        "description": "Learn instruments and perform in school concerts",
+        "schedule": "Wednesdays, 4:00 PM - 5:30 PM",
+        "max_participants": 30,
+        "participants": ["lily@mergington.edu", "mason@mergington.edu"]
+    },
+    "Photography Club": {
+        "description": "Photography techniques, editing, and exhibitions",
+        "schedule": "Thursdays, 3:30 PM - 5:00 PM",
+        "max_participants": 18,
+        "participants": ["zoe@mergington.edu", "aiden@mergington.edu"]
+    },
+    "Robotics Club": {
+        "description": "Build and program robots for competitions",
+        "schedule": "Mondays and Thursdays, 4:00 PM - 5:30 PM",
+        "max_participants": 16,
+        "participants": ["kevin@mergington.edu", "natalie@mergington.edu"]
+    },
+    "Model United Nations": {
+        "description": "Diplomacy, international relations, and public speaking",
+        "schedule": "Wednesdays, 5:00 PM - 6:30 PM",
+        "max_participants": 24,
+        "participants": ["victoria@mergington.edu", "christopher@mergington.edu"]
     }
 }
 
@@ -52,9 +130,14 @@ def get_activities():
     return activities
 
 
+
+
 @app.post("/activities/{activity_name}/signup")
 def signup_for_activity(activity_name: str, email: str):
     """Sign up a student for an activity"""
+    # Normalize email to avoid case/whitespace duplicates
+    email = email.strip().lower()
+
     # Validate activity exists
     if activity_name not in activities:
         raise HTTPException(status_code=404, detail="Activity not found")
@@ -62,6 +145,38 @@ def signup_for_activity(activity_name: str, email: str):
     # Get the specific activity
     activity = activities[activity_name]
 
+    # Validate student is not already signed up
+    if email in (p.strip().lower() for p in activity["participants"]):
+        raise HTTPException(status_code=400, detail="Student is already signed up")
+
+    # Enforce capacity
+    if len(activity["participants"]) >= activity["max_participants"]:
+        raise HTTPException(status_code=400, detail="Activity is full")
+
     # Add student
     activity["participants"].append(email)
     return {"message": f"Signed up {email} for {activity_name}"}
+
+
+@app.delete("/activities/{activity_name}/participants")
+def remove_participant(activity_name: str, email: str):
+    """Remove a participant from an activity (unregister)."""
+    # Normalize email for consistent matching
+    email = email.strip().lower()
+
+    # Validate activity exists
+    if activity_name not in activities:
+        raise HTTPException(status_code=404, detail="Activity not found")
+
+    activity = activities[activity_name]
+
+    # Find a matching participant (normalize stored values when comparing)
+    normalized_participants = [p.strip().lower() for p in activity["participants"]]
+    if email not in normalized_participants:
+        raise HTTPException(status_code=404, detail="Participant not found in activity")
+
+    # Remove the first matching participant (preserve original casing if any)
+    index = normalized_participants.index(email)
+    removed = activity["participants"].pop(index)
+
+    return {"message": f"Removed {removed} from {activity_name}"}
